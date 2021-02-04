@@ -34,11 +34,11 @@ job-attributes-tag:
     job-k-octets (integer): 20
     job-hold-until (keyword): no-hold
     job-sheets (1setOf nameWithoutLanguage): none,none
-    job-printer-state-message (textWithoutLanguage): 
+    job-printer-state-message (textWithoutLanguage):
     job-printer-state-reasons (keyword): none
 
 
- */
+*/
 
 type OperationsAttributesTag struct {
 	AttributesCharset         *string
@@ -50,6 +50,7 @@ type JobAttributesTag struct {
 	JobOriginatingUserName  *string
 	JobName                 *string
 	Copies                  *uint32
+	PrintedPages            *uint32
 	DocumentFormat          *string
 	JobPriority             *uint32
 	JobUuid                 *string
@@ -115,17 +116,17 @@ func extractInt(position int, jobFileBytes []byte) *uint32 {
 
 func strategy(position int, jobFileBytes []byte, newJob *Job) {
 	if compareToString("job-state-reasons", jobFileBytes, position) {
-		newJob.JobAttributesTag.JobPrinterStateReasons = extractString(position + len("job-state-reasons"), jobFileBytes)
+		newJob.JobAttributesTag.JobPrinterStateReasons = extractString(position+len("job-state-reasons"), jobFileBytes)
 	} else if compareToString("job-printer-state-message", jobFileBytes, position) {
-		newJob.JobAttributesTag.JobPrinterStateMessage = extractString(position + len("job-printer-state-message"), jobFileBytes)
+		newJob.JobAttributesTag.JobPrinterStateMessage = extractString(position+len("job-printer-state-message"), jobFileBytes)
 	} else if compareToString("job-hold-until", jobFileBytes, position) {
-		newJob.JobAttributesTag.JobHoldUntil = extractString(position + len("job-hold-until"), jobFileBytes)
+		newJob.JobAttributesTag.JobHoldUntil = extractString(position+len("job-hold-until"), jobFileBytes)
 	} else if compareToString("job-k-octets", jobFileBytes, position) {
-		newJob.JobAttributesTag.JobKOctets = extractInt(position + len("job-k-octets"), jobFileBytes)
+		newJob.JobAttributesTag.JobKOctets = extractInt(position+len("job-k-octets"), jobFileBytes)
 	} else if compareToString("job-media-sheets-completed", jobFileBytes, position) {
-		newJob.JobAttributesTag.JobMediaSheetsCompleted = extractInt(position + len("job-media-sheets"), jobFileBytes)
+		newJob.JobAttributesTag.JobMediaSheetsCompleted = extractInt(position+len("job-media-sheets"), jobFileBytes)
 	} else if compareToString("job-state-reasons", jobFileBytes, position) {
-		newJob.JobAttributesTag.JobStateReasons = extractString(position+len("job-state-reasons"), jobFileBytes)	
+		newJob.JobAttributesTag.JobStateReasons = extractString(position+len("job-state-reasons"), jobFileBytes)
 	} else if compareToString("job-id", jobFileBytes, position) {
 		newJob.JobAttributesTag.JobId = extractInt(position+len("job-id"), jobFileBytes)
 	} else if compareToString("time-at-completed", jobFileBytes, position) {
@@ -144,6 +145,8 @@ func strategy(position int, jobFileBytes []byte, newJob *Job) {
 		newJob.JobAttributesTag.DocumentFormat = extractString(position+len("document-format"), jobFileBytes)
 	} else if compareToString("copies", jobFileBytes, position) {
 		newJob.JobAttributesTag.Copies = extractInt(position+len("copies"), jobFileBytes)
+	} else if compareToString("job-impressions-completed", jobFileBytes, position) {
+		newJob.JobAttributesTag.PrintedPages = extractInt(position+len("job-impressions-completed"), jobFileBytes)
 	} else if compareToString("job-name", jobFileBytes, position) {
 		newJob.JobAttributesTag.JobName = extractString(position+len("job-name"), jobFileBytes)
 	} else if compareToString("job-originating-user-name", jobFileBytes, position) {
@@ -159,7 +162,7 @@ func strategy(position int, jobFileBytes []byte, newJob *Job) {
 		jobPrinterUi := extractString(position+len("job-printer-uri"), jobFileBytes)
 		newJob.JobAttributesTag.JobPrinterUri = jobPrinterUi
 	} else if compareToString("job-state", jobFileBytes, position) {
-		jobState := extractJobState(jobFileBytes, position) 
+		jobState := extractJobState(jobFileBytes, position)
 		newJob.JobAttributesTag.JobState = &jobState
 	} else if compareToString("job-sheets", jobFileBytes, position) {
 		jobSheetsFirstPart := extractString(position+len("job-sheets"), jobFileBytes)
@@ -169,8 +172,8 @@ func strategy(position int, jobFileBytes []byte, newJob *Job) {
 	}
 }
 
-func extractJobState(jobFileBytes []byte, position int) string{
-	jobStateNum := jobFileBytes[position+len("job-sate") + 6]
+func extractJobState(jobFileBytes []byte, position int) string {
+	jobStateNum := jobFileBytes[position+len("job-sate")+6]
 	switch jobStateNum {
 	case 3:
 		return "pending"
